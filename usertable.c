@@ -34,21 +34,21 @@ User* getUser(Usertable* usertable, uint8_t *username) {
 	return NULL;
 }
 
-int8_t addUser(Usertable** usertable, User *user) 
+int8_t addUser(Usertable* usertable, User *user) 
 {
 	uint64_t hashIndex = hashf(user->username), startIndex;
-	startIndex = hashIndex = hashIndex % (*usertable)->size;
+	startIndex = hashIndex = hashIndex % usertable->size;
 	
 
-	while ((*usertable)->users[hashIndex] != NULL && hashIndex != startIndex - 1) {
+	while (usertable->users[hashIndex] != NULL && hashIndex != startIndex - 1) {
 		hashIndex++;
-		hashIndex %= (*usertable)->size;
+		hashIndex %= usertable->size;
 	}
 
 	if (hashIndex == startIndex - 1) {
 		return 1; // Dictionary full
 	} else {
-		(*usertable)->users[hashIndex] = user;
+		usertable->users[hashIndex] = user;
 	}
 		
 	return 0;
