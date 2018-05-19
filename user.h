@@ -3,7 +3,7 @@
 
 
 #include <unistd.h>
-#include <inttypes.h>
+#include <stdint.h>
 
 typedef struct {
 	uint8_t *username;
