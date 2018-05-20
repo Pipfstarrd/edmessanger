@@ -13,6 +13,13 @@
 #define BUFSIZE 65536 // 64 * 1024 = 64 KiB
 
 
+const char usage[] = "Usage: /command [args]\n\
+commands: /help /auth /register /send /update\n\
+/auth USERNAME PASSWORD\n/register USERNAME PASSWORD \n\
+/send RECIPIENT message\n/update — gets messages from the server\n";
+
+const char bugMessage[] = "Wrong request, please, fill a bugreport";
+
 typedef enum { HELP, SENDMSG, GETUPDATES, AUTH, REGISTER } Command;
 
 typedef struct {
@@ -32,20 +39,19 @@ typedef struct {
 	char    *token;
 } User;
 
-typedef enum { OK, ERR } Status;
 
 typedef struct {
-	Status  status;
+	char    *status;
 	uint8_t *text;
 } Response;
 
 
 
-Request*  parse(char *buffer, User *user);
-Response* runRequest(Request *req, int sockfd);
-char*    decode(Response *response);
-char*    getToken();
-char*    setToken();
+Request*    parse(char *buffer, User *user);
+Response*   runRequest(Request *req, int sockfd);
+const char* decode(Response *response);
+char*       getToken();
+char*       setToken();
 
 
 
@@ -55,8 +61,13 @@ int main(int argc, char **argv)
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
 
+
+	Response *response;
+
 	User user;
 	user.loggedin = 0;
+	user.token = malloc(sizeof("abccccde14f88c"));
+	user.token = strdup("abccccde14f88c");
 
 	char buffer[BUFSIZE];
 
@@ -95,9 +106,9 @@ int main(int argc, char **argv)
 
 	printf("Connected to %s:%s\n", argv[1], argv[2]);
 
-	while(1) {
+	while (1) {
 
-		printf("[Status] [%s] ", user.loggedin?"Online":"Offline");
+		printf("\n[Status] [%s] ", user.loggedin?"Online":"Offline");
 		printf("Enter your command:\n");
 		bzero(buffer, BUFSIZE);
 
@@ -105,26 +116,19 @@ int main(int argc, char **argv)
 
 		Request *req = parse(buffer, &user);
 		if (req != NULL) {
-			Response *response = runRequest(req, sockfd);
+			response = runRequest(req, sockfd);
 			printf("%s", decode(response));
+			free(req); 
+			free (response);
 		}
 
-		n = write(sockfd, buffer, strlen(buffer));
+//		n = write(sockfd, buffer, strlen(buffer));
 
-		if (n < 0) {
+		/*if (n < 0) {
 			perror("ERROR writing to socket");
 			return -1;
-		}
+		}*/
 
-		bzero(buffer, BUFSIZE);
-//		n = read(sockfd, buffer, 255);
-
-		if (n < 0) {
-			perror("ERROR reading from socket");
-			return -1;
-		}
-
-		printf("%s\n", buffer);
 	}
 	return 0;
 }
@@ -132,21 +136,25 @@ int main(int argc, char **argv)
 
 Request* parse(char *buffer, User *user)
 {
-	Request *req; 
-	if (buffer || buffer[0] != '/') {
-		char *argstring = buffer;
+	Request *req = malloc(sizeof(Request)); 
+	if (buffer[0] == '/') {
+		char *argstring = strdup(buffer);
 		char *command;
 		command = strsep(&argstring, " \t\n");
-		if (strcmp(command, "/help") == 0) {
-			printf("Usage: /command [args]\n\
-commands: /help /auth /register /send /update\n\
-/auth USERNAME PASSWORD\n/register USERNAME PASSWORD \n\
-/send RECIPIENT message\n/update — gets messages from the server\n");
+		printf("Command %s\n", command);
 
+		if (strcmp(command, "/help") == 0) {
+			printf("%s", usage);
 		} else if (strcmp(command, "/auth") == 0) {
 			req->command  = AUTH;
 			req->username = strsep(&argstring, " \t\n");
 			req->password = strsep(&argstring, " \t\n");
+
+			printf("%s %s\n", req->username, req->password);
+			if (!req->username || !req->password) {
+				printf("Wrong auth command format, plase refer /help for info.\n");
+				return NULL;
+			}
 			return req;
 		} else if (strcmp(command, "/register") == 0) {
 			req->command  = REGISTER;
@@ -167,30 +175,30 @@ commands: /help /auth /register /send /update\n\
 			printf("Please, enter a valid command. Refer /help for information\n");
 			return NULL;
 		}
-		
+
 	} else {
 		printf("Please, enter a valid command. Refer /help for information\n");
 		return NULL;
 	}
 	return NULL;
+
 }
 
 Response* runRequest(Request *req, int sockfd)
 {
 	char buf[BUFSIZE];
 	char *v;
-	Response *resp;
+	Response *resp = malloc(sizeof(Response));
 	json_error_t *error;
 	json_t *request, *response;
 
 	switch (req->command) {
 		case AUTH:
-			printf("%s %s\n", req->username, req->password);
-			fflush(stdout);
 			request = json_pack("{s:s, s:s, s:s}", "action", "auth", "username", 
 			                    req->username, "password", req->password);
 
 			v = json_dumps(request, 0);
+			printf("JSON format: %s\n", v);
 			write(sockfd, v, strlen(v));
 
 			read(sockfd, buf, BUFSIZE);
@@ -205,6 +213,7 @@ Response* runRequest(Request *req, int sockfd)
 			                    req->username, "password", req->password);
 
 			v = json_dumps(request, 0);
+			printf("JSON format: %s\n", v);
 			write(sockfd, v, strlen(v));
 
 
@@ -216,10 +225,12 @@ Response* runRequest(Request *req, int sockfd)
 			break;
 
 		case GETUPDATES:
-			request = json_pack("{s:s, s:s, s:s}", "action", "getupdates", "token", 
+			request = json_pack("{s:s, s:s}", "action", "getupdates", "token", 
 			                    req->token);
+			printf("%s\n", req->token);
 
 			v = json_dumps(request, 0);
+			printf("JSON format: %s\n", v);
 			write(sockfd, v, strlen(v));
 
 			read(sockfd, buf, BUFSIZE);
@@ -234,6 +245,7 @@ Response* runRequest(Request *req, int sockfd)
 			                    req->token, "recipient", req->recipient, "msg", req->msg);
 
 			v = json_dumps(request, 0);
+			printf("JSON format: %s\n", v);
 			write(sockfd, v, strlen(v));
 
 			read(sockfd, buf, BUFSIZE);
@@ -247,10 +259,20 @@ Response* runRequest(Request *req, int sockfd)
 			resp = NULL;
 			break;
 	}
+
+	free (v);
+	free(request);
 	return resp;
 }
 
-char* decode(Response *response)
+const char* decode(Response *response)
 {
-	return "";
+	if (!strcmp(response->status, "OK")) {
+		return response->text;
+	} else {
+		return bugMessage;
+	}
+	
+	// Shouldn't get here 
+	return bugMessage;
 }

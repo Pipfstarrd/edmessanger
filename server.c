@@ -47,9 +47,12 @@ void* clientHandler(void *args)
 		}
 
 		printf("Here is the message: %s", buffer);
+		fflush(stdout);
 //		parse(buffer);
+		const char jsonReply[] = "{\"status\": \"OK\", \"text\": \"Greetings from Equestria!\"}";
+		n = write(client->sockfd, jsonReply, sizeof(jsonReply));
 
-/*		if (n != -1 && n <= 0) {
+		if (n != -1 && n <= 0) {
 			perror("ERROR writing to socket");
 			fflush(stderr);
 			 
@@ -57,7 +60,7 @@ void* clientHandler(void *args)
 
 			client->sockfd    = 0;
 			client->connected = 0;
-		}*/
+		}
 
 	}
 	
