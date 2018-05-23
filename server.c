@@ -25,54 +25,6 @@ postman port\n";
 void* clientHandler(void *args);
 
 
-void* clientHandler(void *args) 
-{
-	ClientEnv *envHandler = (ClientEnv*) args;
-	Client    *client     = &envHandler->clients[envHandler->clientId];
-
-	uint8_t buffer[BUFSIZE]; // 64k is enough for everyone
-	
-	while (1) {
-		bzero (buffer, BUFSIZE);
-		int n = read(client->sockfd, buffer, BUFSIZE);
-
-		if (n == -1 || n == 0) {
-			perror("ERROR reading from socket");
-			fflush(stderr);
-
-			close(client->sockfd);
-
-			client->sockfd    = 0;
-			client->connected = 0;
-			return NULL;
-		}
-
-//		const char jsonReply[] = "{\"status\": \"OK\", \"text\": \"Greetings from Equestria!\"}";
-
-		char *jsonReply = parse(buffer);
-		printf("REPLY: %s %lu\n", jsonReply, strlen(jsonReply));
-
-		n = write(client->sockfd, jsonReply, strlen(jsonReply));
-		free(jsonReply);
-
-		if (n != -1 && n <= 0) {
-			perror("ERROR writing to socket");
-			fflush(stderr);
-			 
-			close(client->sockfd);
-
-			client->sockfd    = 0;
-			client->connected = 0;
-			return NULL;
-		}
-
-	}
-	
-	// Shouldn't get here
-	close(client->sockfd);
-}
-
-
 int main(int argc, char **argv)
 {
 	int32_t sockfd;
@@ -157,4 +109,52 @@ int main(int argc, char **argv)
 
 		printf("I: %d\n", i);
 	}
+}
+
+
+void* clientHandler(void *args) 
+{
+	ClientEnv *envHandler = (ClientEnv*) args;
+	Client    *client     = &envHandler->clients[envHandler->clientId];
+
+	uint8_t buffer[BUFSIZE]; // 64k is enough for everyone
+	
+	while (1) {
+		bzero (buffer, BUFSIZE);
+		int n = read(client->sockfd, buffer, BUFSIZE);
+
+		if (n == -1 || n == 0) {
+			perror("ERROR reading from socket");
+			fflush(stderr);
+
+			close(client->sockfd);
+
+			client->sockfd    = 0;
+			client->connected = 0;
+			return NULL;
+		}
+
+//		const char jsonReply[] = "{\"status\": \"OK\", \"text\": \"Greetings from Equestria!\"}";
+
+		char *jsonReply = parse(buffer);
+		printf("REPLY: %s %lu\n", jsonReply, strlen(jsonReply));
+
+		n = write(client->sockfd, jsonReply, strlen(jsonReply));
+		free(jsonReply);
+
+		if (n != -1 && n <= 0) {
+			perror("ERROR writing to socket");
+			fflush(stderr);
+			 
+			close(client->sockfd);
+
+			client->sockfd    = 0;
+			client->connected = 0;
+			return NULL;
+		}
+
+	}
+	
+	// Shouldn't get here
+	close(client->sockfd);
 }

@@ -2,7 +2,7 @@ CC=clang
 
 CLIENT_SRC=client.c
 CLIENT_BIN=-o chat
-CLIENT_LIBS=-ljansson
+CLIENT_LIBS=-ljansson -lpthread
 CLIENT_OPTIONS=-g
 
 SERVER_SRC=server.c usertable.c eventlist.c api.c

@@ -8,6 +8,8 @@
 
 #include <string.h>
 
+#include <pthread.h>
+
 #include <jansson.h>
 
 #define BUFSIZE 65536 // 64 * 1024 = 64 KiB
@@ -37,6 +39,7 @@ typedef struct {
 	char    *password;
 	uint8_t loggedin;
 	char    *token;
+	int32_t sockfd;
 } User;
 
 
@@ -52,6 +55,8 @@ Response*   runRequest(Request *req, int sockfd);
 const char* decode(Response *response);
 char*       getToken();
 char*       setToken();
+
+void* updateHandler(void* arg);
 
 
 // Temporary handler for user data
@@ -83,6 +88,8 @@ int main(int argc, char **argv)
 		perror("ERROR creating socket");
 		return -1;
 	}
+	
+	user.sockfd = sockfd;
 
 	server = gethostbyname(argv[1]);
 
@@ -104,6 +111,9 @@ int main(int argc, char **argv)
 	}
 
 	printf("Connected to %s:%s\n", argv[1], argv[2]);
+	
+	pthread_t threadHandler;
+	pthread_create(&threadHandler, NULL, updateHandler, NULL);
 
 	while (1) {
 
@@ -254,7 +264,8 @@ Response* runRequest(Request *req, int sockfd)
 
 				array = json_object_get(response, "text");
 				if (!array || json_array_size(array) == 0) {
-					printf("No updates yet!");
+					//printf("No updates yet!");
+					return NULL;
 				}
 
 				json_array_foreach(array, index, value) {
@@ -311,4 +322,19 @@ const char* decode(Response *response)
 	
 	// Shouldn't get here 
 	return bugMessage;
+}
+
+
+void* updateHandler(void* arg) {
+	Request *req = malloc(sizeof(Request));
+	while(1) {
+		if (user.loggedin) {
+			req->command  = GETUPDATES;
+			req->token    = user.token;
+			req->username = user.username;
+			runRequest(req, user.sockfd);
+		}
+		sleep(1);
+	}
+	return NULL;
 }
