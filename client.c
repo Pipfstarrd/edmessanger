@@ -54,6 +54,8 @@ char*       getToken();
 char*       setToken();
 
 
+// Temporary handler for user data
+User user;
 
 int main(int argc, char **argv)
 {
@@ -64,10 +66,7 @@ int main(int argc, char **argv)
 
 	Response *response;
 
-	User user;
 	user.loggedin = 0;
-	user.token = malloc(sizeof("abccccde14f88c"));
-	user.token = strdup("abccccde14f88c");
 
 	char buffer[BUFSIZE];
 
@@ -108,7 +107,7 @@ int main(int argc, char **argv)
 
 	while (1) {
 
-		printf("\n[Status] [%s] ", user.loggedin?"Online":"Offline");
+		printf("\n[Status] [%s] ", user.loggedin? "Online" : "Offline");
 		printf("Enter your command:\n");
 		bzero(buffer, BUFSIZE);
 
@@ -117,7 +116,9 @@ int main(int argc, char **argv)
 		Request *req = parse(buffer, &user);
 		if (req != NULL) {
 			response = runRequest(req, sockfd);
-			printf("%s", decode(response));
+			if (response == NULL) {
+				printf("Failed to process the request!");
+			}
 			free(req); 
 			free (response);
 		}
@@ -141,7 +142,6 @@ Request* parse(char *buffer, User *user)
 		char *argstring = strdup(buffer);
 		char *command;
 		command = strsep(&argstring, " \t\n");
-		printf("Command %s\n", command);
 
 		if (strcmp(command, "/help") == 0) {
 			printf("%s", usage);
@@ -150,7 +150,6 @@ Request* parse(char *buffer, User *user)
 			req->username = strsep(&argstring, " \t\n");
 			req->password = strsep(&argstring, " \t\n");
 
-			printf("%s %s\n", req->username, req->password);
 			if (!req->username || !req->password) {
 				printf("Wrong auth command format, plase refer /help for info.\n");
 				return NULL;
@@ -162,14 +161,16 @@ Request* parse(char *buffer, User *user)
 			req->password = strsep(&argstring, " \t\n");
 			return req;
 		} else if (strcmp(command, "/update") == 0) {
-			req->command = GETUPDATES;
-			req->token   = user->token;
+			req->command  = GETUPDATES;
+			req->token    = user->token;
+			req->username = user->username;
 			return req;
 		} else if (strcmp(command, "/send") == 0) {
 			req->command   = SENDMSG;
 			req->token     = user->token;
 			req->recipient = strsep(&argstring, " \t\n");
 			req->msg       = argstring;
+			req->username  = user->username;
 			return req;
 		} else {
 			printf("Please, enter a valid command. Refer /help for information\n");
@@ -191,6 +192,7 @@ Response* runRequest(Request *req, int sockfd)
 	Response *resp = malloc(sizeof(Response));
 	json_error_t *error;
 	json_t *request, *response;
+	bzero(buf, BUFSIZE);
 
 	switch (req->command) {
 		case AUTH:
@@ -198,13 +200,17 @@ Response* runRequest(Request *req, int sockfd)
 			                    req->username, "password", req->password);
 
 			v = json_dumps(request, 0);
-			printf("JSON format: %s\n", v);
 			write(sockfd, v, strlen(v));
 
 			read(sockfd, buf, BUFSIZE);
 
 			response = json_loads(buf, 0, error);
 			json_unpack(response, "{s:s, s:s}", "status", &resp->status, "token", &resp->text);
+			if (!strcmp(resp->status, "OK")) {
+				user.username  = req->username;
+				user.loggedin  = 1;
+				user.token     = resp->text;
+			}
 
 			break;
 
@@ -213,7 +219,6 @@ Response* runRequest(Request *req, int sockfd)
 			                    req->username, "password", req->password);
 
 			v = json_dumps(request, 0);
-			printf("JSON format: %s\n", v);
 			write(sockfd, v, strlen(v));
 
 
@@ -222,36 +227,67 @@ Response* runRequest(Request *req, int sockfd)
 			response = json_loads(buf, 0, error);
 			json_unpack(response, "{s:s, s:s}", "status", &resp->status, "text", &resp->text);
 
+			printf("%s\n", decode(resp));
 			break;
 
 		case GETUPDATES:
-			request = json_pack("{s:s, s:s}", "action", "getupdates", "token", 
-			                    req->token);
-			printf("%s\n", req->token);
+			request = json_pack("{s:s, s:s, s:s}", "action", "getUpdates", "token", 
+			                    req->token, "username", req->username);
 
 			v = json_dumps(request, 0);
-			printf("JSON format: %s\n", v);
+			if (!v) {
+				printf("You're not authorized!\n");
+				return NULL;
+			}
+
 			write(sockfd, v, strlen(v));
 
 			read(sockfd, buf, BUFSIZE);
 
+			fflush(stdout);
 			response = json_loads(buf, 0, error);
-			json_unpack(response, "{s:s, s:s}", "status", &resp->status, "text", &resp->text);
+			json_unpack(response, "{s:s}", "status", &resp->status);
+			if (!strcmp(resp->status, "OK")) {
+				json_t *array;
+				json_t *value;
+				size_t index;
+
+				array = json_object_get(response, "text");
+				if (!array || json_array_size(array) == 0) {
+					printf("No updates yet!");
+				}
+
+				json_array_foreach(array, index, value) {
+					char *sender, *type, *msg;
+					json_unpack(value, "{s:s, s:s, s:s}", "event", &type,
+					            "sender", &sender, "text", &msg);
+					if (!strcmp(type, "newMessage")) {
+						printf("<%s> %s\n", sender, msg);
+					}
+				}
+			}
 
 			break;
 
 		case SENDMSG:
-			request = json_pack("{s:s, s:s, s:s, s:s}", "action", "sendMsg", "token", 
-			                    req->token, "recipient", req->recipient, "msg", req->msg);
+			request = json_pack("{s:s, s:s, s:s, s:s, s:s}", "action", "sendMsg", "token",
+			                    req->token, "recipient", req->recipient, "msg", req->msg,
+			                    "username", req->username);
 
 			v = json_dumps(request, 0);
-			printf("JSON format: %s\n", v);
+			if (!v) {
+				/* A dirty hack at the moment, we still lack error detection and 
+				   handling at the server API */
+				printf("You're not authorized!\n");
+				return NULL;
+			}
 			write(sockfd, v, strlen(v));
 
 			read(sockfd, buf, BUFSIZE);
 
 			response = json_loads(buf, 0, error);
 			json_unpack(response, "{s:s, s:s}", "status", &resp->status, "text", &resp->text);
+			printf("%s\n", decode(resp));
 
 			break;
 

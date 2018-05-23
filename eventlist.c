@@ -11,12 +11,13 @@ int initEventlist(Eventlist *eventlist)
 	return 0;
 }
 
-int addEvent(Eventlist **eventlist, char *event, char *msg)
+int addEvent(Eventlist **eventlist, const char *event, const char *msg, const char *sender)
 {
 	Eventlist *new = malloc(sizeof(Eventlist));
 
 	new->event   = event;
-	new->message = (uint8_t *) msg;
+	new->message = msg;
+	new->sender  = sender;
 
 	if (*eventlist == NULL) {
 		*eventlist = new;

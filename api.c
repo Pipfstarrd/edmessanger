@@ -30,7 +30,11 @@ char* parse(char *message)
 	json_t       *action;
 	json_error_t error;
 
-	root = json_loads(message, 0, &error);
+	if (message != NULL) {
+		root = json_loads(message, 0, &error);
+	} else {
+		return "";
+	}
 
 	action = json_object_get(root, "action");
 
@@ -44,6 +48,7 @@ char* parse(char *message)
 			return formatError();
 		} else {
 			json_t *params = json_pack("{s:s}", "text", "New user added");
+			printf("json: %s\n", json_dumps(params, 0));
 			return formatResponse("OK", params);
 		}
 	} else if (!strcmp(json_string_value(action), "auth")) {
@@ -97,6 +102,7 @@ int regUser(const char *username, const char *password)
 
 	user->username = (uint8_t*) username;
 	user->password = (uint8_t*) password;
+	printf("USER OBJECT: %s %s\n", user->username, user->password);
 
 	addUser(apiData.usertable, user);
 	return 0;
@@ -114,27 +120,35 @@ char* authUser(const char *username, const char *password)
 char* sendMsg(const char* username, const char* token, const char* recipient, const char* msg )
 {
 	User *user = getUser(apiData.usertable, username);	
-	if (!strcmp(user->token, token)) {
+	if (!user) {
+		return formatError();
+	} else if (!strcmp(user->token, token)) {
+		return formatError();
+	} 
+
+	User *recipnt = getUser(apiData.usertable, recipient);
+	if (!recipnt) {
 		return formatError();
 	}
 
-	User *recipnt = getUser(apiData.usertable, recipient);
-	addEvent(recipnt->eventlist, "newMessage", msg);
+	addEvent(&recipnt->eventlist, "newMessage", msg, username);
 	json_t *params = json_pack("{s:s}", "text", "Message sent");
 	return formatResponse("OK", params);
 }
 
 
-char* getUpdates(char *username, char* token)
+char* getUpdates(const char *username, const char* token)
 {
 	User *user    = getUser(apiData.usertable, username);
 	json_t *events = json_array();
 	json_t *event  = json_object();
 	
 	while (user->eventlist != NULL) {
-		json_object_set(event, user->eventlist->event, 
-		                json_string(user->eventlist->message));
+		json_object_set(event, "event", json_string(user->eventlist->event));
+		json_object_set(event, "sender", json_string(user->eventlist->sender)); 
+		json_object_set(event, "text", json_string(user->eventlist->message)); 
 		json_array_append(events, event);
+
 		removeEvent(&user->eventlist, user->eventlist);
 	}
 	
@@ -148,6 +162,13 @@ char* formatError()
 
 char* formatResponse(char* status, json_t *params)
 {
-	json_object_set(params, "status", status);
-	return json_dumps(params, NULL);
+	json_t *object = json_object();
+	json_object_set(object, "status", json_string(status));
+	if (json_is_object(params)) {
+		json_object_update(object, params);
+	} else {
+		json_object_set(object, "text", params);
+	}
+
+	return json_dumps(object, 0);
 }

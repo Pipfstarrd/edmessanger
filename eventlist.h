@@ -4,13 +4,14 @@
 
 
 typedef struct Eventlist {
-	uint8_t           *event;
-	uint8_t           *message;
+	const   char      *event;
+	const   char      *message;
+	const   char      *sender;
 	struct  Eventlist *next;
 } Eventlist;
 
 int initEventlist(Eventlist *eventlist);
-int addEvent(Eventlist **eventlist, char *event, char *msg);
+int addEvent(Eventlist **eventlist, const char *event, const char *msg, const char *sender);
 int removeEvent(Eventlist **eventlist, Eventlist *removable);
 
 #endif /* EVENTLIST_H */

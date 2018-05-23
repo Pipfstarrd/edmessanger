@@ -36,7 +36,7 @@ void* clientHandler(void *args)
 		bzero (buffer, BUFSIZE);
 		int n = read(client->sockfd, buffer, BUFSIZE);
 
-		if (n != -1 && n <= 0) {
+		if (n == -1 || n == 0) {
 			perror("ERROR reading from socket");
 			fflush(stderr);
 
@@ -44,14 +44,16 @@ void* clientHandler(void *args)
 
 			client->sockfd    = 0;
 			client->connected = 0;
+			return NULL;
 		}
 
-	//	printf("Here is the message: %s", buffer);
-//		fflush(stdout);
-		parse(buffer);
+//		const char jsonReply[] = "{\"status\": \"OK\", \"text\": \"Greetings from Equestria!\"}";
 
-		const char jsonReply[] = "{\"status\": \"OK\", \"text\": \"Greetings from Equestria!\"}";
-		n = write(client->sockfd, jsonReply, sizeof(jsonReply));
+		char *jsonReply = parse(buffer);
+		printf("REPLY: %s %lu\n", jsonReply, strlen(jsonReply));
+
+		n = write(client->sockfd, jsonReply, strlen(jsonReply));
+		free(jsonReply);
 
 		if (n != -1 && n <= 0) {
 			perror("ERROR writing to socket");
@@ -61,6 +63,7 @@ void* clientHandler(void *args)
 
 			client->sockfd    = 0;
 			client->connected = 0;
+			return NULL;
 		}
 
 	}

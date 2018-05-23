@@ -24,8 +24,8 @@ typedef struct {
 
 
 Usertable* newUserTable(int count);
-User* getUser(Usertable* usertable, uint8_t *username);
+User* getUser(Usertable* usertable, const char *username);
 int8_t addUser(Usertable* usertable, User *user);
-uint64_t hashf(uint8_t *str);
+uint64_t hashf(const char *str);
 
 #endif /* USER_H */

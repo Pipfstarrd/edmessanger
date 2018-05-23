@@ -16,7 +16,7 @@ Usertable* newUserTable(int count) {
 	return usertable;
 }
 
-User* getUser(Usertable* usertable, uint8_t *username) {
+User* getUser(Usertable* usertable, const char *username) {
 	uint64_t hashIndex = hashf(username), startIndex;
 	startIndex = hashIndex = hashIndex % usertable->size;
 
@@ -56,7 +56,7 @@ int8_t addUser(Usertable* usertable, User *user)
 }
 
 
-uint64_t hashf(uint8_t *str) 
+uint64_t hashf(const char *str) 
 {
 	uint64_t hash = 5381;
 	int32_t c;
