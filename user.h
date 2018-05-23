@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <stdint.h>
 
+#include "eventlist.h"
+
 typedef struct {
 	uint8_t *username;
 	uint8_t *password;
@@ -12,6 +14,7 @@ typedef struct {
 	uint8_t token[100];
 	int32_t *fd;
 	uint64_t hash;
+	Eventlist *eventlist;
 } User;
 
 typedef struct {

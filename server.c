@@ -46,9 +46,10 @@ void* clientHandler(void *args)
 			client->connected = 0;
 		}
 
-		printf("Here is the message: %s", buffer);
-		fflush(stdout);
-//		parse(buffer);
+	//	printf("Here is the message: %s", buffer);
+//		fflush(stdout);
+		parse(buffer);
+
 		const char jsonReply[] = "{\"status\": \"OK\", \"text\": \"Greetings from Equestria!\"}";
 		n = write(client->sockfd, jsonReply, sizeof(jsonReply));
 
@@ -98,6 +99,8 @@ int main(int argc, char **argv)
 			return -1;
 		}
 	}
+
+	initApi(usertable);
 	
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0) {

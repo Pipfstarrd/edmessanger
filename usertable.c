@@ -49,6 +49,7 @@ int8_t addUser(Usertable* usertable, User *user)
 		return 1; // Dictionary full
 	} else {
 		usertable->users[hashIndex] = user;
+		initEventlist(usertable->users[hashIndex]->eventlist);
 	}
 		
 	return 0;

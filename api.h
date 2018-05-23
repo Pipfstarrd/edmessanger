@@ -2,10 +2,12 @@
 #define API_H
 
 
-int parse(char *message);
+char* parse(char *message);
 int regUser(const char *username, const char *password);
-int authUser(char *username, char *password);
-int sendMsg(char* token, char* msg, char* recipient);
-int getUpdates(char *username);
+char* authUser(const char *username, const char *password);
+char* sendMsg(const char *username, const char *token, const char *msg, const char *recipient);
+char* getUpdates(char *username, char *token);
+char* formatError();
+char* formatResponse(char* status, json_t *params);
 
 #endif /* API_H */
