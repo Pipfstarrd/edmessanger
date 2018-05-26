@@ -41,14 +41,12 @@ char* parse(char *message)
 	if (!strcmp(json_string_value(action), "register")) {
 		const char *username = json_string_value(json_object_get(root, "username"));
 		const char *password = json_string_value(json_object_get(root, "password"));
-		printf("%s %s\n", username, password);
 		if (regUser(username, password) == -1) {
 			return formatError();
 		} else if (username == NULL || password == NULL) {
 			return formatError();
 		} else {
 			json_t *params = json_pack("{s:s}", "text", "New user added");
-			printf("json: %s\n", json_dumps(params, 0));
 			return formatResponse("OK", params);
 		}
 	} else if (!strcmp(json_string_value(action), "auth")) {
@@ -76,7 +74,7 @@ char* parse(char *message)
 		}
 	} else if (!strcmp(json_string_value(action), "getUpdates")) {
 		const char *username = json_string_value(json_object_get(root, "username"));
-		const char *token = json_string_value(json_object_get(root, "username"));
+		const char *token = json_string_value(json_object_get(root, "token"));
 		if (username != NULL && token != NULL) {
 			return getUpdates(username, token);
 		} else {
@@ -93,6 +91,8 @@ char* parse(char *message)
 
 int regUser(const char *username, const char *password)
 {
+	FILE *fp;
+
 	User *test = getUser(apiData.usertable, username);
 	if (test != NULL) {
 		return -1;
@@ -100,11 +100,20 @@ int regUser(const char *username, const char *password)
 
 	User *user = malloc(sizeof(User));
 
-	user->username = (uint8_t*) username;
-	user->password = (uint8_t*) password;
-	printf("USER OBJECT: %s %s\n", user->username, user->password);
+	user->username = (char*) username;
+	user->password = (char*) password;
 
 	addUser(apiData.usertable, user);
+
+	char *v = dumpTable(apiData.usertable);
+	fp = fopen("users.db", "w");
+
+	fprintf(fp, "%s", v);
+
+	fclose(fp);
+
+	free (v);
+
 	return 0;
 }
 
@@ -113,6 +122,7 @@ char* authUser(const char *username, const char *password)
 {
 	User *user = getUser(apiData.usertable, username);
 	if (!strcmp(user->password, password)) {
+		user->token = "aaabckkkdjf31";
 		return "aaabckkkdjf31";
 	} else return NULL;
 }
@@ -122,7 +132,7 @@ char* sendMsg(const char* username, const char* token, const char* recipient, co
 	User *user = getUser(apiData.usertable, username);	
 	if (!user) {
 		return formatError();
-	} else if (!strcmp(user->token, token)) {
+	} else if (strcmp(user->token, token)) {
 		return formatError();
 	} 
 
@@ -139,10 +149,19 @@ char* sendMsg(const char* username, const char* token, const char* recipient, co
 
 char* getUpdates(const char *username, const char* token)
 {
-	User *user    = getUser(apiData.usertable, username);
+	User *user = getUser(apiData.usertable, username);
+	
+	if (user == NULL) {
+		return formatError();
+	}
+
+	//if (strcmp(user->token, token)) {
+//		return formatError();
+//	}
+	
 	json_t *events = json_array();
 	json_t *event  = json_object();
-	
+
 	while (user->eventlist != NULL) {
 		json_object_set(event, "event", json_string(user->eventlist->event));
 		json_object_set(event, "sender", json_string(user->eventlist->sender)); 

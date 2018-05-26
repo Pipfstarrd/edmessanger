@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <jansson.h>
+
 #include "user.h"
 
 
@@ -55,6 +57,79 @@ int8_t addUser(Usertable* usertable, User *user)
 	return 0;
 }
 
+
+/*
+ * DESCR:
+ * Dumps table contents in json format. 
+ *
+ * ARGS:
+ * Takes Usertable pointer as argument
+ */
+char* dumpTable(Usertable *usertable)
+{
+	json_t *dump = json_array();
+	for (int i = 0; i < usertable->size; i++) {
+		if (usertable->users[i] != NULL) {
+			json_t *userHandle = json_object();
+			printf("Username: %s, password: %s\n", usertable->users[i]->username, usertable->users[i]->password);
+			json_object_set_new(userHandle, "username", json_string(usertable->users[i]->username));
+			json_object_set_new(userHandle, "password", json_string(usertable->users[i]->password));
+			json_array_append_new(dump, userHandle);
+		}
+	}
+	return json_dumps(dump, 0);
+}
+
+/*
+ * DESCR:
+ * Imports table from string in json format
+ *
+ * ARGS:
+ * Usertable reference to be filled
+ * String containing json data to be imported
+ */
+int importTable(Usertable *usertable, char *dump)
+{
+	json_t *parsedDump = json_array();
+	parsedDump = json_loads(dump, 0, NULL);
+
+	if (parsedDump == NULL) {
+		fprintf(stderr, "Corrupted user database, failed to load\n");
+		return -1;
+	}
+
+	size_t index;
+	json_t *value;
+
+	printf("%s\n", json_dumps(parsedDump, 0));
+
+	json_array_foreach(parsedDump, index, value) {
+		printf("VALUE: %s\n", json_dumps(value, 0));
+		printf("VALUE username: %s\n", json_string_value(json_object_get(value, "username")));
+		printf("VALUE password: %s\n", json_string_value(json_object_get(value, "password")));
+
+		User *user = malloc(sizeof(User));
+		user->username = (char*) json_string_value(json_object_get(value, "username"));
+		user->password = (char*) json_string_value(json_object_get(value, "password"));
+		addUser(usertable, user);
+	}
+
+	printTable(usertable);
+	return 0;
+}
+
+
+int printTable(Usertable *usertable)
+{
+	printf("[");
+	for (int i = 0; i < usertable->size; i++) {
+		if (usertable->users[i] != NULL) {
+			printf("{ \"username\": \"%s\", \"password\": \"%s\" }, \n", usertable->users[i]->username, usertable->users[i]->password);
+		}
+	}
+	printf("]");
+	return 0;
+}
 
 uint64_t hashf(const char *str) 
 {

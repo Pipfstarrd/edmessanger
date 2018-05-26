@@ -6,6 +6,8 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include <jansson.h>
 
@@ -40,6 +42,26 @@ int main(int argc, char **argv)
 	int32_t clilen;
 	
 	Usertable *usertable = newUserTable(CLIENT_MAX);
+
+	int fp;
+
+	fp = open("users.db", O_RDONLY);
+
+	struct stat *sb = malloc(sizeof(struct stat));
+	fstat(fp, sb);
+
+	int fsize = sb->st_size + 1; // for the '\0'
+	
+	char *buf = malloc(fsize);
+	bzero(buf, fsize);
+
+	read(fp, buf, fsize - 1);
+
+	buf[fsize] = '\0';
+	
+	close(fp);
+
+	importTable(usertable, buf);
 
 	struct sockaddr_in serv_addr;
 
@@ -107,7 +129,6 @@ int main(int argc, char **argv)
 			i %= CLIENT_MAX; 
 		}
 
-		printf("I: %d\n", i);
 	}
 }
 
@@ -117,7 +138,7 @@ void* clientHandler(void *args)
 	ClientEnv *envHandler = (ClientEnv*) args;
 	Client    *client     = &envHandler->clients[envHandler->clientId];
 
-	uint8_t buffer[BUFSIZE]; // 64k is enough for everyone
+	uint8_t buffer[BUFSIZE]; 
 	
 	while (1) {
 		bzero (buffer, BUFSIZE);
@@ -134,14 +155,16 @@ void* clientHandler(void *args)
 			return NULL;
 		}
 
-//		const char jsonReply[] = "{\"status\": \"OK\", \"text\": \"Greetings from Equestria!\"}";
 
 		char *jsonReply = parse(buffer);
-		printf("REPLY: %s %lu\n", jsonReply, strlen(jsonReply));
+
+		if (jsonReply != NULL) {
 
 		n = write(client->sockfd, jsonReply, strlen(jsonReply));
-		free(jsonReply);
 
+		
+		//free(jsonReply);
+		} 
 		if (n != -1 && n <= 0) {
 			perror("ERROR writing to socket");
 			fflush(stderr);

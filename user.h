@@ -8,12 +8,12 @@
 #include "eventlist.h"
 
 typedef struct {
-	uint8_t *username;
-	uint8_t *password;
-	uint8_t status;
-	uint8_t token[100];
-	int32_t *fd;
-	uint64_t hash;
+	char      *username;
+	char      *password;
+//	uint8_t status;
+	char      *token;
+	int32_t   *fd;
+	uint64_t  hash;
 	Eventlist *eventlist;
 } User;
 
@@ -23,9 +23,12 @@ typedef struct {
 } Usertable;
 
 
-Usertable* newUserTable(int count);
-User* getUser(Usertable* usertable, const char *username);
-int8_t addUser(Usertable* usertable, User *user);
-uint64_t hashf(const char *str);
+Usertable* newUserTable (int);
+User*      getUser      (Usertable*, const char*);
+int8_t     addUser      (Usertable*, User*);
+char*      dumpTable    (Usertable*);
+int        importTable  (Usertable*, char*);
+int        printTable   (Usertable*);
+uint64_t   hashf        (const char*);
 
 #endif /* USER_H */

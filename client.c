@@ -216,6 +216,7 @@ Response* runRequest(Request *req, int sockfd)
 
 			response = json_loads(buf, 0, error);
 			json_unpack(response, "{s:s, s:s}", "status", &resp->status, "token", &resp->text);
+			printf("TOKEN: %s\n", resp->text);
 			if (!strcmp(resp->status, "OK")) {
 				user.username  = req->username;
 				user.loggedin  = 1;
@@ -286,6 +287,7 @@ Response* runRequest(Request *req, int sockfd)
 			                    "username", req->username);
 
 			v = json_dumps(request, 0);
+			printf("v: %s\n", v);
 			if (!v) {
 				/* A dirty hack at the moment, we still lack error detection and 
 				   handling at the server API */
