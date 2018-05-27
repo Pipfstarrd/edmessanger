@@ -124,7 +124,7 @@ int printTable(Usertable *usertable)
 	printf("[");
 	for (int i = 0; i < usertable->size; i++) {
 		if (usertable->users[i] != NULL) {
-			printf("{ \"username\": \"%s\", \"password\": \"%s\" }, \n", usertable->users[i]->username, usertable->users[i]->password);
+			printf("{ \"username\": \"%s\", \"password\": \"%s\" },", usertable->users[i]->username, usertable->users[i]->password);
 		}
 	}
 	printf("]");

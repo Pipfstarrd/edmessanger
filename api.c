@@ -166,7 +166,7 @@ char* getUpdates(const char *username, const char* token)
 		json_object_set(event, "event", json_string(user->eventlist->event));
 		json_object_set(event, "sender", json_string(user->eventlist->sender)); 
 		json_object_set(event, "text", json_string(user->eventlist->message)); 
-		json_array_append(events, event);
+		json_array_append_new(events, event);
 
 		removeEvent(&user->eventlist, user->eventlist);
 	}

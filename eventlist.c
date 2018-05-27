@@ -41,7 +41,7 @@ int removeEvent(Eventlist **eventlist, Eventlist *removable)
 	while(cur != removable) {
 		prev = cur;
 		cur  = next;
-		next = prev->next;
+		next = cur->next;
 	}
 
 	if (prev != NULL) {
