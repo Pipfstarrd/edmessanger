@@ -18,6 +18,7 @@ int addEvent(Eventlist **eventlist, const char *event, const char *msg, const ch
 	new->event   = event;
 	new->message = msg;
 	new->sender  = sender;
+	new->next    = NULL;
 
 	if (*eventlist == NULL) {
 		*eventlist = new;
@@ -29,6 +30,7 @@ int addEvent(Eventlist **eventlist, const char *event, const char *msg, const ch
 	}
 
 	(*eventlist)->next = new;
+	
 	return 0;
 }
 
