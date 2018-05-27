@@ -160,12 +160,12 @@ char* getUpdates(const char *username, const char* token)
 //	}
 	
 	json_t *events = json_array();
-	json_t *event  = json_object();
 
 	while (user->eventlist != NULL) {
-		json_object_set(event, "event", json_string(user->eventlist->event));
-		json_object_set(event, "sender", json_string(user->eventlist->sender)); 
-		json_object_set(event, "text", json_string(user->eventlist->message)); 
+		json_t *event  = json_object();
+		json_object_set_new(event, "event", json_string(user->eventlist->event));
+		json_object_set_new(event, "sender", json_string(user->eventlist->sender)); 
+		json_object_set_new(event, "text", json_string(user->eventlist->message)); 
 		json_array_append_new(events, event);
 
 		removeEvent(&user->eventlist, user->eventlist);

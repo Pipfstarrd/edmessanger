@@ -104,10 +104,6 @@ int importTable(Usertable *usertable, char *dump)
 	printf("%s\n", json_dumps(parsedDump, 0));
 
 	json_array_foreach(parsedDump, index, value) {
-		printf("VALUE: %s\n", json_dumps(value, 0));
-		printf("VALUE username: %s\n", json_string_value(json_object_get(value, "username")));
-		printf("VALUE password: %s\n", json_string_value(json_object_get(value, "password")));
-
 		User *user = malloc(sizeof(User));
 		user->username = (char*) json_string_value(json_object_get(value, "username"));
 		user->password = (char*) json_string_value(json_object_get(value, "password"));
