@@ -9,7 +9,7 @@ typedef struct {
 	struct    sockaddr_in client_addr;
 	int32_t               clilen;
 	pthread_t             threadHandler; 
-	int32_t               connected;
+	uint8_t               connected;
 } Client;
 
 typedef struct {

@@ -3,12 +3,12 @@ CC=clang
 CLIENT_SRC=client.c
 CLIENT_BIN=-o chat
 CLIENT_LIBS=-ljansson -lpthread
-CLIENT_OPTIONS=-g
+CLIENT_OPTIONS=-g # -Xlinker -static
 
 SERVER_SRC=server.c usertable.c eventlist.c api.c
 SERVER_BIN=-o postman
 SERVER_LIBS=-ljansson -lpthread
-SERVER_OPTIONS=-g
+SERVER_OPTIONS=-g # -Xlinker -static
 
 INCLUDE_PATH=-I/usr/local/include/
 LIB_PATH=-L/usr/local/lib/

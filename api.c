@@ -41,9 +41,9 @@ char* parse(char *message)
 	if (!strcmp(json_string_value(action), "register")) {
 		const char *username = json_string_value(json_object_get(root, "username"));
 		const char *password = json_string_value(json_object_get(root, "password"));
-		if (regUser(username, password) == -1) {
+		if (username == NULL || password == NULL) {
 			return formatError();
-		} else if (username == NULL || password == NULL) {
+		} else if (regUser(username, password) == -1) {
 			return formatError();
 		} else {
 			json_t *params = json_pack("{s:s}", "text", "New user added");
@@ -54,9 +54,9 @@ char* parse(char *message)
 		const char *username = json_string_value(json_object_get(root, "username"));
 		const char *password = json_string_value(json_object_get(root, "password"));
 
-		if ( (token = authUser(username, password)) == NULL) {
+		if (username == NULL || password == NULL) {
 			return formatError();
-		} else if (username == NULL || password == NULL) {
+		} else if ( (token = authUser(username, password)) == NULL) {
 			return formatError();
 		} else {
 			json_t *params = json_pack("{s:s}", "token", token); 
@@ -74,7 +74,7 @@ char* parse(char *message)
 		}
 	} else if (!strcmp(json_string_value(action), "getUpdates")) {
 		const char *username = json_string_value(json_object_get(root, "username"));
-		const char *token = json_string_value(json_object_get(root, "token"));
+		const char *token    = json_string_value(json_object_get(root, "token"));
 		if (username != NULL && token != NULL) {
 			return getUpdates(username, token);
 		} else {
@@ -160,13 +160,13 @@ char* getUpdates(const char *username, const char* token)
 //	}
 	
 	json_t *events = json_array();
+	json_t *event  = json_object();
 
 	while (user->eventlist != NULL) {
-		json_t *event  = json_object();
 		json_object_set_new(event, "event", json_string(user->eventlist->event));
 		json_object_set_new(event, "sender", json_string(user->eventlist->sender)); 
 		json_object_set_new(event, "text", json_string(user->eventlist->message)); 
-		json_array_append_new(events, event);
+		json_array_append(events, event);
 
 		removeEvent(&user->eventlist, user->eventlist);
 	}

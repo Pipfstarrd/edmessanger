@@ -13,6 +13,10 @@ int initEventlist(Eventlist *eventlist)
 
 int addEvent(Eventlist **eventlist, const char *event, const char *msg, const char *sender)
 {
+	if (event == NULL || mst == NULL || sender == NULL) {
+		printf("Passed NULL as argument to addEvent, check your code\n");
+		return -1;
+	}
 	Eventlist *new = malloc(sizeof(Eventlist));
 
 	new->event   = event;
@@ -41,9 +45,13 @@ int removeEvent(Eventlist **eventlist, Eventlist *removable)
 	
 
 	while(cur != removable) {
+		/*
+		 * (0: prev, prev->next == cur) ; (1: cur, cur->next == next) ; (2: next, next->next)
+		 * (0: cur, cur->next)          ; (1: next, next->next)       ; (2: next->next)
+		 */
 		prev = cur;
 		cur  = next;
-		next = cur->next;
+		next = cur->next; // next->next
 	}
 
 	if (prev != NULL) {
