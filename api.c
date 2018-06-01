@@ -121,6 +121,10 @@ int regUser(const char *username, const char *password)
 char* authUser(const char *username, const char *password)
 {
 	User *user = getUser(apiData.usertable, username);
+	if (!user) {
+		return formatError();
+	}
+
 	if (!strcmp(user->password, password)) {
 		user->token = "aaabckkkdjf31";
 		return "aaabckkkdjf31";
@@ -163,12 +167,16 @@ char* getUpdates(const char *username, const char* token)
 	json_t *event  = json_object();
 
 	while (user->eventlist != NULL) {
-		json_object_set_new(event, "event", json_string(user->eventlist->event));
-		json_object_set_new(event, "sender", json_string(user->eventlist->sender)); 
-		json_object_set_new(event, "text", json_string(user->eventlist->message)); 
-		json_array_append(events, event);
+		if (user->eventlist->event   != NULL && 
+		    user->eventlist->sender  != NULL && 
+		    user->eventlist->message != NULL) {
+			json_object_set_new(event, "event", json_string(user->eventlist->event));
+			json_object_set_new(event, "sender", json_string(user->eventlist->sender)); 
+			json_object_set_new(event, "text", json_string(user->eventlist->message)); 
+			json_array_append(events, event);
 
-		removeEvent(&user->eventlist, user->eventlist);
+			removeEvent(&user->eventlist, user->eventlist);
+		}
 	}
 	
 	return formatResponse("OK", events);

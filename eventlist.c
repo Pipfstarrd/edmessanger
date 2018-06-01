@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 
 #include "eventlist.h"
@@ -19,6 +20,7 @@ int addEvent(Eventlist **eventlist, const char *event, const char *msg, const ch
 		return -1;
 	}
 	Eventlist *new = malloc(sizeof(Eventlist));
+	bzero(new, sizeof(Eventlist));
 
 	new->event   = event;
 	new->message = msg;
