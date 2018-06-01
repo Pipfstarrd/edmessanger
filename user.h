@@ -23,12 +23,12 @@ typedef struct {
 } Usertable;
 
 
-Usertable* newUserTable (int);
-User*      getUser      (Usertable*, const char*);
-int8_t     addUser      (Usertable*, User*);
-char*      dumpTable    (Usertable*);
-int        importTable  (Usertable*, char*);
-int        printTable   (Usertable*);
-uint64_t   hashf        (const char*);
+Usertable* newUserTable(int);
+User*      getUser(Usertable*, const char*);
+int8_t     addUser(Usertable*, User*);
+char*      dumpTable(Usertable*);
+int        importTable(Usertable*, char*);
+int        printTable(Usertable*);
+uint64_t   hashf(const char*);
 
 #endif /* USER_H */

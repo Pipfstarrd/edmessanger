@@ -1,19 +1,20 @@
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 
 #include "eventlist.h"
 
 
-int initEventlist(Eventlist *eventlist) 
+int initEventlist(Eventlist **eventlist) 
 {
-	eventlist = NULL;
+	*eventlist = NULL;
 	return 0;
 }
 
 int addEvent(Eventlist **eventlist, const char *event, const char *msg, const char *sender)
 {
-	if (event == NULL || mst == NULL || sender == NULL) {
+	if (event == NULL || msg == NULL || sender == NULL) {
 		printf("Passed NULL as argument to addEvent, check your code\n");
 		return -1;
 	}

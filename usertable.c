@@ -22,8 +22,7 @@ User* getUser(Usertable* usertable, const char *username) {
 	uint64_t hashIndex = hashf(username), startIndex;
 	startIndex = hashIndex = hashIndex % usertable->size;
 
-	while (usertable->users[hashIndex] != NULL) {
-
+	while (usertable->users[hashIndex] != NULL && (hashIndex != startIndex - 1)) {
 
 		if(!strcmp(usertable->users[hashIndex]->username, username)) {
 			return *(usertable->users + hashIndex);
@@ -51,7 +50,7 @@ int8_t addUser(Usertable* usertable, User *user)
 		return 1; // Dictionary full
 	} else {
 		usertable->users[hashIndex] = user;
-		initEventlist(usertable->users[hashIndex]->eventlist);
+		initEventlist(&usertable->users[hashIndex]->eventlist);
 	}
 		
 	return 0;

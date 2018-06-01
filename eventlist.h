@@ -11,7 +11,7 @@ typedef struct Eventlist {
 	struct  Eventlist *next;
 } Eventlist;
 
-int initEventlist(Eventlist *eventlist);
+int initEventlist(Eventlist **eventlist);
 int addEvent(Eventlist **eventlist, const char *event, const char *msg, const char *sender);
 int removeEvent(Eventlist **eventlist, Eventlist *removable);
 

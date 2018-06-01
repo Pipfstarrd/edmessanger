@@ -2,13 +2,13 @@
 #define API_H
 
 
-int initApi(Usertable *usertable);
-char* parse(char *message);
-int regUser(const char *username, const char *password);
-char* authUser(const char *username, const char *password);
-char* sendMsg(const char *username, const char *token, const char *msg, const char *recipient);
-char* getUpdates(const char *username, const char *token);
+int initApi(Usertable*);
+char* parse(char*);
+int regUser(const char*, const char*);
+char* authUser(const char*, const char*);
+char* sendMsg(const char*, const char*, const char*, const char*);
+char* getUpdates(const char*, const char*);
 char* formatError();
-char* formatResponse(char* status, json_t *params);
+char* formatResponse(char*, json_t*);
 
 #endif /* API_H */

@@ -39,7 +39,6 @@ int main(int argc, char **argv)
 	}
 
 	int16_t portno;
-	int32_t clilen;
 	
 	Usertable *usertable = newUserTable(CLIENT_MAX);
 
@@ -60,6 +59,7 @@ int main(int argc, char **argv)
 	buf[fsize] = '\0';
 	
 	close(fp);
+	free(sb);
 
 	importTable(usertable, buf);
 
